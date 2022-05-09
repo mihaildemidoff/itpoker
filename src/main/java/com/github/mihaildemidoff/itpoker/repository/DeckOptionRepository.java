@@ -1,4 +1,3 @@
-
 package com.github.mihaildemidoff.itpoker.repository;
 
 import com.github.mihaildemidoff.itpoker.model.entity.DeckOptionEntity;

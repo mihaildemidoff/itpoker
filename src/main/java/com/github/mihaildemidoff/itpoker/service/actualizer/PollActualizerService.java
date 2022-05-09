@@ -1,7 +1,7 @@
 package com.github.mihaildemidoff.itpoker.service.actualizer;
 
-import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
 import com.github.mihaildemidoff.itpoker.service.poll.PollService;
+import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
 import com.github.mihaildemidoff.itpoker.service.telegram.TemplateService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;

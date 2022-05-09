@@ -1,6 +1,7 @@
 package com.github.mihaildemidoff.itpoker.model.entity;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,26 +17,24 @@ import java.time.LocalDateTime;
 
 @Table("deck_option")
 @Getter
-@Setter
 @EqualsAndHashCode
 @AllArgsConstructor
-@NoArgsConstructor
-@With
+@Builder(toBuilder = true)
 public class DeckOptionEntity implements AuditableEntity {
     @Id
-    private Long id;
+    private final Long id;
     @Column("deck_id")
-    private Long deckId;
+    private final Long deckId;
     @Column("text")
-    private String text;
+    private final String text;
     @Column("row")
-    private Integer row;
+    private final Integer row;
     @Column("index")
-    private Integer index;
+    private final Integer index;
     @Column("created_date")
     @CreatedDate
-    private LocalDateTime createdDate;
+    private final LocalDateTime createdDate;
     @Column("modified_date")
     @LastModifiedDate
-    private LocalDateTime modifiedDate;
+    private final LocalDateTime modifiedDate;
 }

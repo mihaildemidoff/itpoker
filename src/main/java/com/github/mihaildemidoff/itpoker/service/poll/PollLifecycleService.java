@@ -2,8 +2,8 @@ package com.github.mihaildemidoff.itpoker.service.poll;
 
 import com.github.mihaildemidoff.itpoker.mapper.PollMapper;
 import com.github.mihaildemidoff.itpoker.model.bo.PollBO;
-import com.github.mihaildemidoff.itpoker.model.entity.PollEntity;
 import com.github.mihaildemidoff.itpoker.model.common.PollStatus;
+import com.github.mihaildemidoff.itpoker.model.entity.PollEntity;
 import com.github.mihaildemidoff.itpoker.model.exception.PollNotFoundException;
 import com.github.mihaildemidoff.itpoker.model.exception.UserNotAllowedException;
 import com.github.mihaildemidoff.itpoker.repository.PollRepository;
@@ -32,9 +32,10 @@ public class PollLifecycleService {
                     if (!Objects.equals(poll.getAuthorId(), userId)) {
                         return Mono.error(new UserNotAllowedException());
                     } else {
-                        final PollEntity updatedPoll = poll
-                                .withStatus(PollStatus.FINISHED)
-                                .withNeedRefresh(true);
+                        final PollEntity updatedPoll = poll.toBuilder()
+                                .status(PollStatus.FINISHED)
+                                .needRefresh(true)
+                                .build();
                         return pollRepository.save(updatedPoll);
                     }
                 })
@@ -50,9 +51,10 @@ public class PollLifecycleService {
                     if (!Objects.equals(poll.getAuthorId(), userId)) {
                         return Mono.error(new UserNotAllowedException());
                     } else {
-                        final PollEntity updatedPoll = poll
-                                .withStatus(PollStatus.IN_PROGRESS)
-                                .withNeedRefresh(true);
+                        final PollEntity updatedPoll = poll.toBuilder()
+                                .status(PollStatus.IN_PROGRESS)
+                                .needRefresh(true)
+                                .build();
                         return voteService
                                 .deleteVotesForPoll(poll.getId())
                                 .then(pollRepository.save(updatedPoll));

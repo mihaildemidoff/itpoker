@@ -37,21 +37,20 @@ public class VoteService {
                 .switchIfEmpty(Mono.error(new PollNotFoundException("Poll with messageId " + pollMessageId + " Not found")))
                 .flatMap(poll -> voteRepository
                         .findByPollIdAndUserId(poll.id(), userId)
-                        .map(vote -> vote
-                                .withDeckOptionId(deckOptionId)
-                                .withFirstName(firstName)
-                                .withLastName(lastName)
-                                .withUsername(username))
-                        .switchIfEmpty(Mono.fromCallable(() -> {
-                                    final VoteEntity vote = new VoteEntity();
-                                    vote.setPollId(poll.id());
-                                    vote.setDeckOptionId(deckOptionId);
-                                    vote.setUserId(userId);
-                                    vote.setFirstName(firstName);
-                                    vote.setLastName(lastName);
-                                    vote.setUsername(username);
-                                    return vote;
-                                })
+                        .map(vote -> vote.toBuilder()
+                                .deckOptionId(deckOptionId)
+                                .firstName(firstName)
+                                .lastName(lastName)
+                                .username(username)
+                                .build())
+                        .switchIfEmpty(Mono.fromCallable(() -> VoteEntity.builder()
+                                .pollId(poll.id())
+                                .deckOptionId(deckOptionId)
+                                .userId(userId)
+                                .firstName(firstName)
+                                .lastName(lastName)
+                                .username(username)
+                                .build())
                         )
                         .flatMap(voteRepository::save))
                 .map(voteMapper::toBO);

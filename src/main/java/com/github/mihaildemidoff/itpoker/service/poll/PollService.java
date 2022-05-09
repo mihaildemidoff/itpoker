@@ -2,8 +2,9 @@ package com.github.mihaildemidoff.itpoker.service.poll;
 
 import com.github.mihaildemidoff.itpoker.mapper.PollMapper;
 import com.github.mihaildemidoff.itpoker.model.bo.PollBO;
-import com.github.mihaildemidoff.itpoker.model.entity.PollEntity;
+import com.github.mihaildemidoff.itpoker.model.common.PollStatus;
 import com.github.mihaildemidoff.itpoker.model.common.ProcessingStatus;
+import com.github.mihaildemidoff.itpoker.model.entity.PollEntity;
 import com.github.mihaildemidoff.itpoker.repository.PollRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,8 +22,11 @@ public class PollService {
     public Mono<PollBO> findNextPollForProcessing() {
         return pollRepository
                 .findNextPollForProcessing()
-                .map(poll -> poll.withProcessingStatus(ProcessingStatus.PROCESSING)
-                        .withNeedRefresh(false))
+                .map(poll -> poll.toBuilder()
+                        .processingStatus(ProcessingStatus.PROCESSING)
+                        .needRefresh(false)
+                        .build()
+                )
                 .flatMap(pollRepository::save)
                 .map(pollMapper::toBO);
     }
@@ -31,7 +35,10 @@ public class PollService {
     public Mono<PollBO> moveToReadyToProcess(final Long id) {
         return pollRepository
                 .findById(id)
-                .map(poll -> poll.withProcessingStatus(ProcessingStatus.READY_TO_PROCESS))
+                .map(poll -> poll.toBuilder()
+                        .processingStatus(ProcessingStatus.READY_TO_PROCESS)
+                        .build()
+                )
                 .flatMap(pollRepository::save)
                 .map(pollMapper::toBO);
     }
@@ -45,7 +52,7 @@ public class PollService {
     public Mono<PollBO> setNeedUpdate(final Long id) {
         return pollRepository
                 .findById(id)
-                .map(poll -> poll.withNeedRefresh(true))
+                .map(poll -> poll.toBuilder().needRefresh(true).build())
                 .flatMap(pollRepository::save)
                 .map(pollMapper::toBO);
     }
@@ -55,14 +62,15 @@ public class PollService {
                                    final String messageId,
                                    final Long authorId,
                                    final String query) {
-        final PollEntity poll = new PollEntity();
-        poll.setDeckId(deckId);
-        poll.setMessageId(messageId);
-        poll.setAuthorId(authorId);
-        poll.setQuery(query);
-        poll.setNeedRefresh(true);
-        poll.setProcessingStatus(ProcessingStatus.READY_TO_PROCESS);
-        return pollRepository.save(poll)
+        return pollRepository.save(PollEntity.builder()
+                        .deckId(deckId)
+                        .messageId(messageId)
+                        .authorId(authorId)
+                        .query(query)
+                        .needRefresh(true)
+                        .processingStatus(ProcessingStatus.READY_TO_PROCESS)
+                        .status(PollStatus.IN_PROGRESS)
+                        .build())
                 .map(pollMapper::toBO);
     }
 }

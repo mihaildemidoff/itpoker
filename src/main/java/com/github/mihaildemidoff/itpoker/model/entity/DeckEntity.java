@@ -2,6 +2,7 @@ package com.github.mihaildemidoff.itpoker.model.entity;
 
 import com.github.mihaildemidoff.itpoker.model.common.DeckType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,24 +18,22 @@ import java.time.LocalDateTime;
 
 @Table("deck")
 @Getter
-@Setter
 @EqualsAndHashCode
 @AllArgsConstructor
-@NoArgsConstructor
-@With
+@Builder(toBuilder = true)
 public class DeckEntity implements AuditableEntity {
     @Id
-    private Long id;
+    private final Long id;
     @Column("type")
-    private DeckType type;
+    private final DeckType type;
     @Column("title")
-    private String title;
+    private final String title;
     @Column("description")
-    private String description;
+    private final String description;
     @Column("created_date")
     @CreatedDate
-    private LocalDateTime createdDate;
+    private final LocalDateTime createdDate;
     @Column("modified_date")
     @LastModifiedDate
-    private LocalDateTime modifiedDate;
+    private final LocalDateTime modifiedDate;
 }

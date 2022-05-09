@@ -1,12 +1,9 @@
 package com.github.mihaildemidoff.itpoker.model.entity;
 
-import com.github.mihaildemidoff.itpoker.model.entity.AuditableEntity;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.With;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -17,30 +14,28 @@ import java.time.LocalDateTime;
 
 @Table("vote")
 @Getter
-@Setter
 @EqualsAndHashCode
 @AllArgsConstructor
-@NoArgsConstructor
-@With
+@Builder(toBuilder = true)
 public class VoteEntity implements AuditableEntity {
     @Id
-    private Long id;
+    private final Long id;
     @Column("poll_id")
-    private Long pollId;
+    private final Long pollId;
     @Column("deck_option_id")
-    private Long deckOptionId;
+    private final Long deckOptionId;
     @Column("user_id")
-    private Long userId;
+    private final Long userId;
     @Column("username")
-    private String username;
+    private final String username;
     @Column("first_name")
-    private String firstName;
+    private final String firstName;
     @Column("last_name")
-    private String lastName;
+    private final String lastName;
     @Column("created_date")
     @CreatedDate
-    private LocalDateTime createdDate;
+    private final LocalDateTime createdDate;
     @Column("modified_date")
     @LastModifiedDate
-    private LocalDateTime modifiedDate;
+    private final LocalDateTime modifiedDate;
 }

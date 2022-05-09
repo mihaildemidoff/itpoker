@@ -3,9 +3,8 @@ package com.github.mihaildemidoff.itpoker.service.telegram.handler;
 import com.github.mihaildemidoff.itpoker.model.exception.PollAlreadyFinishedException;
 import com.github.mihaildemidoff.itpoker.model.exception.PollNotFoundException;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckOptionService;
-import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
 import com.github.mihaildemidoff.itpoker.service.poll.PollLifecycleService;
-import com.github.mihaildemidoff.itpoker.service.telegram.TemplateService;
+import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
 import com.github.mihaildemidoff.itpoker.service.vote.VoteService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -28,7 +27,6 @@ public class CallbackQueryHandler implements UpdateHandler {
     private final DeckOptionService deckOptionService;
     private final KeyboardMarkupService keyboardMarkupService;
     private final PollLifecycleService pollLifecycleService;
-    private final TemplateService templateService;
 
     @Override
     @Transactional

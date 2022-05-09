@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: ITPoker
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/itpoker
+    username:
+    password:
+    pool:
+      initial-size: 2
+      max-size: 5
+  liquibase:
+    url: jdbc:postgresql://localhost:5432/itpoker
+    user:
+    password:
+    change-log: classpath:liquibase/changelog.yml
+  main:
+    banner-mode: off
+  lifecycle:
+    timeout-per-shutdown-phase: 3s
+
+telegram:
+  token:
+  name:

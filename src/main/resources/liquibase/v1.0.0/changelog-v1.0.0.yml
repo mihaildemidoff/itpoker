@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - include:
+      file: liquibase/v1.0.0/2022-05-05--add-decks.sql
+  - include:
+      file: liquibase/v1.0.0/2022-05-05--add-deck-option.sql
+  - include:
+      file: liquibase/v1.0.0/2022-05-05--add-poll.sql
+  - include:
+      file: liquibase/v1.0.0/2022-05-05--add-vote.sql

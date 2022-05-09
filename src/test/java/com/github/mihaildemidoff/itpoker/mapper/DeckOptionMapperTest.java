@@ -1,8 +1,7 @@
 package com.github.mihaildemidoff.itpoker.mapper;
 
-import com.github.mihaildemidoff.itpoker.model.bo.DeckBO;
-import com.github.mihaildemidoff.itpoker.model.common.DeckType;
-import com.github.mihaildemidoff.itpoker.model.entity.DeckEntity;
+import com.github.mihaildemidoff.itpoker.model.bo.DeckOptionBO;
+import com.github.mihaildemidoff.itpoker.model.entity.DeckOptionEntity;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.CoreMatchers;
@@ -18,26 +17,28 @@ import java.time.ZoneId;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @ExtendWith(MockitoExtension.class)
-class DeckMapperTest {
+class DeckOptionMapperTest {
 
     @InjectMocks
-    private ServiceDeckMapperImpl mapper;
+    private ServiceDeckOptionMapperImpl mapper;
 
     @Test
     void testToBO() {
-        final DeckEntity source = DeckEntity.builder()
+        final DeckOptionEntity source = DeckOptionEntity.builder()
                 .id(RandomUtils.nextLong())
-                .type(DeckType.values()[RandomUtils.nextInt(0, DeckType.values().length)])
-                .title(RandomStringUtils.randomAlphabetic(10))
-                .description(RandomStringUtils.randomAlphabetic(10))
+                .deckId(RandomUtils.nextLong())
+                .text(RandomStringUtils.randomAlphabetic(10))
+                .row(RandomUtils.nextInt())
+                .index(RandomUtils.nextInt())
                 .createdDate(LocalDateTime.ofInstant(Instant.ofEpochMilli(RandomUtils.nextLong()), ZoneId.systemDefault()))
                 .modifiedDate(LocalDateTime.ofInstant(Instant.ofEpochMilli(RandomUtils.nextLong()), ZoneId.systemDefault()))
                 .build();
-        final DeckBO result = mapper.toBO(source);
+        final DeckOptionBO result = mapper.toBO(source);
         assertThat(result.id(), CoreMatchers.is(source.getId()));
-        assertThat(result.type(), CoreMatchers.is(source.getType()));
-        assertThat(result.title(), CoreMatchers.is(source.getTitle()));
-        assertThat(result.description(), CoreMatchers.is(source.getDescription()));
+        assertThat(result.deckId(), CoreMatchers.is(source.getDeckId()));
+        assertThat(result.text(), CoreMatchers.is(source.getText()));
+        assertThat(result.row(), CoreMatchers.is(source.getRow()));
+        assertThat(result.index(), CoreMatchers.is(source.getIndex()));
         assertThat(result.createdDate(), CoreMatchers.is(source.getCreatedDate()));
         assertThat(result.modifiedDate(), CoreMatchers.is(source.getModifiedDate()));
     }

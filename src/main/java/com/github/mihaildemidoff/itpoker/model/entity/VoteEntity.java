@@ -10,6 +10,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Table("vote")
@@ -18,12 +19,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class VoteEntity implements AuditableEntity {
+    @NotNull
     @Id
     private final Long id;
+    @NotNull
     @Column("poll_id")
     private final Long pollId;
+    @NotNull
     @Column("deck_option_id")
     private final Long deckOptionId;
+    @NotNull
     @Column("user_id")
     private final Long userId;
     @Column("username")
@@ -32,9 +37,11 @@ public class VoteEntity implements AuditableEntity {
     private final String firstName;
     @Column("last_name")
     private final String lastName;
+    @NotNull
     @Column("created_date")
     @CreatedDate
     private final LocalDateTime createdDate;
+    @NotNull
     @Column("modified_date")
     @LastModifiedDate
     private final LocalDateTime modifiedDate;

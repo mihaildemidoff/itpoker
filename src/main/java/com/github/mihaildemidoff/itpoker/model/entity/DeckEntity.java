@@ -11,6 +11,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Table("deck")
@@ -19,17 +20,23 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class DeckEntity implements AuditableEntity {
+    @NotNull
     @Id
     private final Long id;
+    @NotNull
     @Column("type")
     private final DeckType type;
+    @NotNull
     @Column("title")
     private final String title;
+    @NotNull
     @Column("description")
     private final String description;
+    @NotNull
     @Column("created_date")
     @CreatedDate
     private final LocalDateTime createdDate;
+    @NotNull
     @Column("modified_date")
     @LastModifiedDate
     private final LocalDateTime modifiedDate;

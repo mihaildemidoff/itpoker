@@ -5,6 +5,7 @@ import com.github.mihaildemidoff.itpoker.model.bo.PollBO;
 import com.github.mihaildemidoff.itpoker.model.common.PollStatus;
 import com.github.mihaildemidoff.itpoker.model.common.ProcessingStatus;
 import com.github.mihaildemidoff.itpoker.model.entity.PollEntity;
+import com.github.mihaildemidoff.itpoker.model.exception.PollNotFoundException;
 import com.github.mihaildemidoff.itpoker.repository.PollRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class PollService {
     public Mono<PollBO> moveToReadyToProcess(final Long id) {
         return pollRepository
                 .findById(id)
+                .switchIfEmpty(Mono.error(new PollNotFoundException("Poll with id: " + id + " not found")))
                 .map(poll -> poll.toBuilder()
                         .processingStatus(ProcessingStatus.READY_TO_PROCESS)
                         .build()
@@ -49,9 +51,11 @@ public class PollService {
                 .map(pollMapper::toBO);
     }
 
-    public Mono<PollBO> setNeedUpdate(final Long id) {
+    @Transactional
+    public Mono<PollBO> setNeedRefresh(final Long id) {
         return pollRepository
                 .findById(id)
+                .switchIfEmpty(Mono.error(new PollNotFoundException("Poll with id: " + id + " not found")))
                 .map(poll -> poll.toBuilder().needRefresh(true).build())
                 .flatMap(pollRepository::save)
                 .map(pollMapper::toBO);

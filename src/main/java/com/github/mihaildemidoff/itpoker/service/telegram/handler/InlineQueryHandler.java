@@ -1,8 +1,11 @@
 package com.github.mihaildemidoff.itpoker.service.telegram.handler;
 
 import com.github.mihaildemidoff.itpoker.model.bo.ButtonType;
+import com.github.mihaildemidoff.itpoker.model.bo.DeckBO;
+import com.github.mihaildemidoff.itpoker.model.bo.template.PollTemplateBO;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
+import com.github.mihaildemidoff.itpoker.service.telegram.TemplateService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +29,7 @@ public class InlineQueryHandler implements UpdateHandler {
 
     private final DeckService deckService;
     private final KeyboardMarkupService keyboardMarkupService;
+    private final TemplateService templateService;
 
     @Override
     @Transactional
@@ -34,11 +38,7 @@ public class InlineQueryHandler implements UpdateHandler {
             return Mono.empty();
         }
         return deckService.findAllDecks()
-                .flatMap(deck -> keyboardMarkupService.buildMarkup(deck.id(), List.of(ButtonType.VOTE, ButtonType.RESTART, ButtonType.FINISH))
-                        .map(buttons -> {
-                            final InputTextMessageContent inputMessageContent = new InputTextMessageContent("Some message", "HTML", true, List.of());
-                            return (InlineQueryResult) new InlineQueryResultArticle(deck.id().toString(), deck.title(), inputMessageContent, buttons, null, true, deck.description(), null, null, null);
-                        }))
+                .flatMap(deck -> buildQueryResult(update, deck))
                 .collectList()
                 .map(decks -> {
                     final AnswerInlineQuery answer = new AnswerInlineQuery(update.getInlineQuery().getId(), decks);
@@ -54,6 +54,22 @@ public class InlineQueryHandler implements UpdateHandler {
                     }
                 })
                 .map(aBoolean -> aBoolean);
+    }
+
+    private Mono<InlineQueryResult> buildQueryResult(final Update update, final DeckBO deck) {
+        return Mono.zip(keyboardMarkupService
+                                .buildMarkup(deck.id(), List.of(ButtonType.VOTE, ButtonType.RESTART, ButtonType.FINISH)),
+                        templateService.generateVoteTemplate(PollTemplateBO.builder()
+                                .decision("")
+                                .hasDecision(false)
+                                .finished(false)
+                                .taskName(update.getInlineQuery().getQuery())
+                                .votes(List.of())
+                                .build()))
+                .map(t -> {
+                    final InputTextMessageContent inputMessageContent = new InputTextMessageContent(t.getT2(), "HTML", true, List.of());
+                    return new InlineQueryResultArticle(deck.id().toString(), deck.title(), inputMessageContent, t.getT1(), null, true, deck.description(), null, null, null);
+                });
     }
 
     @Override

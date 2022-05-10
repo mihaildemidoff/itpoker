@@ -52,6 +52,7 @@ public class PollActualizerService {
                                             }
                                         })
                                         .flatMap(serializable -> pollService.moveToReadyToProcess(poll.id()))
+                                        .onErrorResume(e -> pollService.moveToReadyToProcess(poll.id()))
                                         .thenReturn(true);
                             });
                 })

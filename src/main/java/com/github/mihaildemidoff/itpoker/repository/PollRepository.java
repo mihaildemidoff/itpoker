@@ -1,6 +1,8 @@
 package com.github.mihaildemidoff.itpoker.repository;
 
+import com.github.mihaildemidoff.itpoker.model.common.PollStatus;
 import com.github.mihaildemidoff.itpoker.model.entity.PollEntity;
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Mono;
@@ -17,5 +19,22 @@ public interface PollRepository extends ReactiveCrudRepository<PollEntity, Long>
             limit 1"""
     )
     Mono<PollEntity> findNextPollForProcessing();
+
+    @Modifying
+    @Query(value = """
+            UPDATE poll
+            SET need_refresh = true
+            WHERE id = :pollId"""
+    )
+    Mono<Long> setNeedRefreshForPoll(Long pollId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE poll
+            SET need_refresh = true, status = :status
+            WHERE id = :pollId"""
+    )
+    Mono<Long> setStatusWithNeedRefresh(Long pollId, PollStatus status);
+
 
 }

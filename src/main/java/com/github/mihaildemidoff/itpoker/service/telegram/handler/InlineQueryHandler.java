@@ -1,5 +1,6 @@
 package com.github.mihaildemidoff.itpoker.service.telegram.handler;
 
+import com.github.mihaildemidoff.itpoker.model.bo.ButtonType;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,7 @@ public class InlineQueryHandler implements UpdateHandler {
             return Mono.empty();
         }
         return deckService.findAllDecks()
-                .flatMap(deck -> keyboardMarkupService.buildMarkup(deck.id())
+                .flatMap(deck -> keyboardMarkupService.buildMarkup(deck.id(), List.of(ButtonType.VOTE, ButtonType.RESTART, ButtonType.FINISH))
                         .map(buttons -> {
                             final InputTextMessageContent inputMessageContent = new InputTextMessageContent("Some message", "HTML", true, List.of());
                             return (InlineQueryResult) new InlineQueryResultArticle(deck.id().toString(), deck.title(), inputMessageContent, buttons, null, true, deck.description(), null, null, null);

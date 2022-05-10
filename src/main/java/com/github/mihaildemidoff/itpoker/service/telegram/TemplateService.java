@@ -50,7 +50,8 @@ public class TemplateService {
                         .map(votes -> PollTemplateBO.builder()
                                 .finished(poll.status() == PollStatus.FINISHED)
                                 .taskName(poll.query())
-                                .consensus(votes.stream().map(VoteTemplateBO::getValue).distinct().count() == 1)
+                                .hasDecision(votes.stream().map(VoteTemplateBO::getValue).distinct().count() == 1)
+                                .decision(votes.stream().map(VoteTemplateBO::getValue).distinct().findAny().orElse(null))
                                 .votes(votes)
                                 .build())
                         .flatMap(this::generateVoteTemplate));

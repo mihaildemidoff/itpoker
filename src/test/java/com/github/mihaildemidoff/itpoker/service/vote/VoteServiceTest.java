@@ -59,7 +59,7 @@ class VoteServiceTest {
         Mockito.when(pollService.findPollByMessageId(ArgumentMatchers.eq(pollMessageId)))
                 .thenReturn(Mono.just(poll));
         Mockito.when(pollService.setNeedRefresh(ArgumentMatchers.eq(pollId)))
-                .thenReturn(Mono.just(poll));
+                .thenReturn(Mono.empty());
         final VoteEntity existingVote = VoteEntity.builder()
                 .id(RandomUtils.nextLong())
                 .pollId(pollId)
@@ -102,7 +102,7 @@ class VoteServiceTest {
         Mockito.when(pollService.findPollByMessageId(ArgumentMatchers.eq(pollMessageId)))
                 .thenReturn(Mono.just(poll));
         Mockito.when(pollService.setNeedRefresh(ArgumentMatchers.eq(pollId)))
-                .thenReturn(Mono.just(poll));
+                .thenReturn(Mono.empty());
         Mockito.when(voteRepository.findByPollIdAndUserId(ArgumentMatchers.eq(pollId), ArgumentMatchers.eq(userId)))
                 .thenReturn(Mono.empty());
         final VoteEntityArgumentMatcher voteMatcher = new VoteEntityArgumentMatcher(null, pollId, deckOptionId, userId, firstname, lastname, username, null, null);
@@ -117,6 +117,23 @@ class VoteServiceTest {
                 .verifyComplete();
     }
 
+    @Test
+    void testCreateOrUpdateNeedRefreshUpdateNotSuccess() {
+        final String pollMessageId = RandomStringUtils.randomAlphabetic(10);
+        final Long pollId = RandomUtils.nextLong();
+        final PollBO poll = PollBO.builder()
+                .id(pollId)
+                .status(PollStatus.IN_PROGRESS)
+                .build();
+        Mockito.when(pollService.findPollByMessageId(ArgumentMatchers.eq(pollMessageId)))
+                .thenReturn(Mono.just(poll));
+        Mockito.when(pollService.setNeedRefresh(ArgumentMatchers.eq(pollId)))
+                .thenReturn(Mono.error(new PollNotFoundException()));
+        StepVerifier.create(voteService.createOrUpdateVote(pollMessageId, null, null, null, null, null))
+                .expectSubscription()
+                .expectError(PollNotFoundException.class)
+                .verify();
+    }
 
     @Test
     void testCreateOrUpdateVotePollFinished() {

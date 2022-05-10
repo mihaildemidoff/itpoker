@@ -10,6 +10,7 @@ import java.util.List;
 public final class PollTemplateBO {
     private final String taskName;
     private final boolean finished;
-    private final boolean consensus;
+    private final boolean hasDecision;
+    private final String decision;
     private final List<VoteTemplateBO> votes;
 }

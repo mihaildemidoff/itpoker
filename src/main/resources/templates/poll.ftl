@@ -1,8 +1,8 @@
 Task: <b>${taskName}</b>
 
-
 <#if finished>
-Consensus - <#if consensus>✅<#else>⛔</#if>
+<#if hasDecision>✅ Decision: <b>${decision}</b><#else>⛔ No decision</#if>
+
 </#if>
 <b>Votes:</b>
 <#list votes as vote>

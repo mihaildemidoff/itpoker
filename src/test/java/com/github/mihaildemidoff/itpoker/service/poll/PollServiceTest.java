@@ -91,28 +91,49 @@ class PollServiceTest {
     }
 
     @Test
+    void testSetPollStatusWithNeedRefresh() {
+        final Long pollId = RandomUtils.nextLong();
+        final PollStatus status = PollStatus.values()[RandomUtils.nextInt(0, PollStatus.values().length)];
+        Mockito.when(pollRepository.setStatusWithNeedRefresh(ArgumentMatchers.eq(pollId), ArgumentMatchers.eq(status)))
+                .thenReturn(Mono.just(1L));
+        StepVerifier.create(pollService.setPollStatusWithNeedRefresh(pollId, status))
+                .expectSubscription()
+                .expectNextCount(0)
+                .verifyComplete();
+        Mockito.verify(pollRepository, Mockito.times(1))
+                .setStatusWithNeedRefresh(ArgumentMatchers.eq(pollId), ArgumentMatchers.eq(status));
+    }
+
+    @Test
+    void testSetPollStatusWithNeedRefreshPollNotFound() {
+        final Long pollId = RandomUtils.nextLong();
+        final PollStatus status = PollStatus.values()[RandomUtils.nextInt(0, PollStatus.values().length)];
+        Mockito.when(pollRepository.setStatusWithNeedRefresh(ArgumentMatchers.eq(pollId), ArgumentMatchers.eq(status)))
+                .thenReturn(Mono.just(0L));
+        StepVerifier.create(pollService.setPollStatusWithNeedRefresh(pollId, status))
+                .expectSubscription()
+                .expectError(PollNotFoundException.class)
+                .verify();
+    }
+
+    @Test
     void testSetNeedRefresh() {
         final Long pollId = RandomUtils.nextLong();
-        Mockito.when(pollRepository.findById(ArgumentMatchers.eq(pollId)))
-                .thenReturn(Mono.just(PollEntity.builder()
-                        .needRefresh(false)
-                        .build()));
-        Mockito.when(pollRepository.save(ArgumentMatchers.argThat(arg -> Objects.equals(arg.getNeedRefresh(), true))))
-                .thenAnswer((Answer<Mono<PollEntity>>) invocationOnMock -> Mono.just(invocationOnMock.getArgument(0)));
-        final PollBO expected = PollBO.builder().build();
-        Mockito.when(pollMapper.toBO(ArgumentMatchers.argThat(arg -> Objects.equals(arg.getNeedRefresh(), true))))
-                .thenReturn(expected);
+        Mockito.when(pollRepository.setNeedRefreshForPoll(ArgumentMatchers.eq(pollId)))
+                .thenReturn(Mono.just(1L));
         StepVerifier.create(pollService.setNeedRefresh(pollId))
                 .expectSubscription()
-                .expectNext(expected)
+                .expectNextCount(0)
                 .verifyComplete();
+        Mockito.verify(pollRepository, Mockito.times(1))
+                .setNeedRefreshForPoll(ArgumentMatchers.eq(pollId));
     }
 
     @Test
     void testSetNeedRefreshPollNotFound() {
         final Long pollId = RandomUtils.nextLong();
-        Mockito.when(pollRepository.findById(ArgumentMatchers.eq(pollId)))
-                .thenReturn(Mono.empty());
+        Mockito.when(pollRepository.setNeedRefreshForPoll(ArgumentMatchers.eq(pollId)))
+                .thenReturn(Mono.just(0L));
         StepVerifier.create(pollService.setNeedRefresh(pollId))
                 .expectSubscription()
                 .expectError(PollNotFoundException.class)

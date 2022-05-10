@@ -12,6 +12,7 @@ import com.github.mihaildemidoff.itpoker.service.poll.PollService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -23,6 +24,7 @@ public class VoteService {
     private final VoteMapper voteMapper;
     private final PollService pollService;
 
+    @Transactional
     public Mono<VoteBO> createOrUpdateVote(final String pollMessageId,
                                            final Long deckOptionId,
                                            final Long userId,
@@ -30,9 +32,9 @@ public class VoteService {
                                            final String firstName,
                                            final String lastName) {
         return pollService.findPollByMessageId(pollMessageId)
-                .flatMap(this::checkPollStatus)
-                .flatMap(poll -> pollService.setNeedRefresh(poll.id()))
                 .switchIfEmpty(Mono.error(new PollNotFoundException("Poll with messageId " + pollMessageId + " Not found")))
+                .flatMap(this::checkPollStatus)
+                .flatMap(poll -> pollService.setNeedRefresh(poll.id()).then(Mono.just(poll)))
                 .flatMap(poll -> voteRepository
                         .findByPollIdAndUserId(poll.id(), userId)
                         .switchIfEmpty(Mono.just(VoteEntity.builder()

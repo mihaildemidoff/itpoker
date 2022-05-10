@@ -1,5 +1,7 @@
 package com.github.mihaildemidoff.itpoker.service.actualizer;
 
+import com.github.mihaildemidoff.itpoker.model.bo.ButtonType;
+import com.github.mihaildemidoff.itpoker.model.common.PollStatus;
 import com.github.mihaildemidoff.itpoker.service.poll.PollService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
 import com.github.mihaildemidoff.itpoker.service.telegram.TemplateService;
@@ -14,6 +16,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.Serializable;
 import java.time.Duration;
+import java.util.List;
 import java.util.function.Function;
 
 @Service
@@ -28,11 +31,10 @@ public class PollActualizerService {
     public Flux<Boolean> actualizePolls() {
         return Flux.interval(Duration.ofSeconds(1L))
                 .flatMap(index -> pollService.findNextPollForProcessing())
-
                 .flatMap(poll -> {
                     return templateService.generateTemplateForPoll(poll.messageId())
                             .flatMap(template -> {
-                                return keyboardMarkupService.buildMarkup(poll.deckId())
+                                return keyboardMarkupService.buildMarkup(poll.deckId(), poll.status() == PollStatus.FINISHED ? List.of(ButtonType.RESTART) : List.of(ButtonType.VOTE, ButtonType.RESTART, ButtonType.FINISH))
                                         .map(markup -> {
                                             final EditMessageText editMessageText = new EditMessageText();
                                             editMessageText.setInlineMessageId(poll.messageId());

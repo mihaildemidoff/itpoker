@@ -52,13 +52,28 @@ public class PollService {
     }
 
     @Transactional
-    public Mono<PollBO> setNeedRefresh(final Long id) {
+    public Mono<Void> setNeedRefresh(final Long id) {
         return pollRepository
-                .findById(id)
-                .switchIfEmpty(Mono.error(new PollNotFoundException("Poll with id: " + id + " not found")))
-                .map(poll -> poll.toBuilder().needRefresh(true).build())
-                .flatMap(pollRepository::save)
-                .map(pollMapper::toBO);
+                .setNeedRefreshForPoll(id)
+                .flatMap(updatedCount -> {
+                    if (updatedCount != 1) {
+                        return Mono.error(new PollNotFoundException("Didn't update need_refresh for poll: " + id));
+                    }
+                    return Mono.empty();
+                });
+    }
+
+    @Transactional
+    public Mono<Void> setPollStatusWithNeedRefresh(final Long id,
+                                                   final PollStatus status) {
+        return pollRepository
+                .setStatusWithNeedRefresh(id, status)
+                .flatMap(updatedCount -> {
+                    if (updatedCount != 1) {
+                        return Mono.error(new PollNotFoundException("Didn't update need_refresh for poll: " + id));
+                    }
+                    return Mono.empty();
+                });
     }
 
     @Transactional

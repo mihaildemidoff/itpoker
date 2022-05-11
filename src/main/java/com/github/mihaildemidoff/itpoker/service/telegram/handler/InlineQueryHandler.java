@@ -5,9 +5,9 @@ import com.github.mihaildemidoff.itpoker.model.bo.DeckBO;
 import com.github.mihaildemidoff.itpoker.model.bo.template.PollTemplateBO;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
+import com.github.mihaildemidoff.itpoker.service.telegram.SenderHelper;
 import com.github.mihaildemidoff.itpoker.service.telegram.TemplateService;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +20,6 @@ import org.telegram.telegrambots.meta.bots.AbsSender;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +29,7 @@ public class InlineQueryHandler implements UpdateHandler {
     private final DeckService deckService;
     private final KeyboardMarkupService keyboardMarkupService;
     private final TemplateService templateService;
+    private final SenderHelper senderHelper;
 
     @Override
     @Transactional
@@ -46,13 +46,7 @@ public class InlineQueryHandler implements UpdateHandler {
                     answer.setCacheTime(0);
                     return answer;
                 })
-                .flatMap(new Function<AnswerInlineQuery, Mono<? extends Boolean>>() {
-                    @Override
-                    @SneakyThrows
-                    public Mono<? extends Boolean> apply(final AnswerInlineQuery answer) {
-                        return Mono.fromFuture(absSender.executeAsync(answer));
-                    }
-                })
+                .flatMap(answer -> senderHelper.executeAsync(absSender, answer))
                 .map(aBoolean -> aBoolean);
     }
 

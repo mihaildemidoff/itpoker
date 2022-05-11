@@ -5,9 +5,9 @@ import com.github.mihaildemidoff.itpoker.model.exception.PollNotFoundException;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckOptionService;
 import com.github.mihaildemidoff.itpoker.service.poll.PollLifecycleService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
+import com.github.mihaildemidoff.itpoker.service.telegram.SenderHelper;
 import com.github.mihaildemidoff.itpoker.service.vote.VoteService;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,8 +17,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.bots.AbsSender;
 import reactor.core.publisher.Mono;
 
-import java.util.function.Function;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -27,6 +25,7 @@ public class CallbackQueryHandler implements UpdateHandler {
     private final DeckOptionService deckOptionService;
     private final KeyboardMarkupService keyboardMarkupService;
     private final PollLifecycleService pollLifecycleService;
+    private final SenderHelper senderHelper;
 
     @Override
     @Transactional
@@ -35,20 +34,18 @@ public class CallbackQueryHandler implements UpdateHandler {
                 .flatMap(callback -> keyboardMarkupService.getButtonType(callback.getData())
                         .flatMap(buttonType -> switch (buttonType) {
                             case VOTE -> vote(callback, absSender);
-                            case FINISH -> finishPoll(callback, absSender);
-                            case RESTART -> restartPoll(callback, absSender);
+                            case FINISH -> finishPoll(callback);
+                            case RESTART -> restartPoll(callback);
                         }))
                 .thenReturn(true);
     }
 
-    private Mono<Boolean> restartPoll(final CallbackQuery callbackQuery,
-                                      final AbsSender absSender) {
+    private Mono<Boolean> restartPoll(final CallbackQuery callbackQuery) {
         return pollLifecycleService.restartPoll(callbackQuery.getInlineMessageId(), callbackQuery.getFrom().getId())
                 .thenReturn(true);
     }
 
-    private Mono<Boolean> finishPoll(final CallbackQuery callbackQuery,
-                                     final AbsSender absSender) {
+    private Mono<Boolean> finishPoll(final CallbackQuery callbackQuery) {
         return pollLifecycleService.finishPoll(callbackQuery.getInlineMessageId(), callbackQuery.getFrom().getId())
                 .thenReturn(true);
     }
@@ -80,13 +77,7 @@ public class CallbackQueryHandler implements UpdateHandler {
                         .showAlert(false)
                         .build())
                 )
-                .flatMap(new Function<AnswerCallbackQuery, Mono<? extends Boolean>>() {
-                    @SneakyThrows
-                    @Override
-                    public Mono<? extends Boolean> apply(final AnswerCallbackQuery answer) {
-                        return Mono.fromFuture(absSender.executeAsync(answer));
-                    }
-                });
+                .flatMap(answerCallbackQuery -> senderHelper.executeAsync(absSender, answerCallbackQuery));
     }
 
 }

@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.bots.AbsSender;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import reactor.core.publisher.Mono;
 
 import java.io.Serializable;
@@ -17,7 +16,7 @@ public class SenderHelper {
                                                                                          final Method method) {
         try {
             return Mono.fromFuture(absSender.executeAsync(method));
-        } catch (final TelegramApiException e) {
+        } catch (final Exception e) {
             return Mono.error(e);
         }
     }

@@ -50,7 +50,8 @@ public class InlineQueryHandler implements UpdateHandler {
                 .map(aBoolean -> aBoolean);
     }
 
-    private Mono<InlineQueryResult> buildQueryResult(final Update update, final DeckBO deck) {
+    private Mono<InlineQueryResult> buildQueryResult(final Update update,
+                                                     final DeckBO deck) {
         return Mono.zip(keyboardMarkupService
                                 .buildMarkup(deck.id(), List.of(ButtonType.VOTE, ButtonType.RESTART, ButtonType.FINISH)),
                         templateService.generateVoteTemplate(PollTemplateBO.builder()

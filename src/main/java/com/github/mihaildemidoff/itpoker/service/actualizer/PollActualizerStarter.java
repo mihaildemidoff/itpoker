@@ -16,16 +16,21 @@ public class PollActualizerStarter {
     private final PollActualizerService pollActualizerService;
 
     private Disposable pollActualizerChain;
+    private Disposable pollStuckedRequestsChain;
 
     @EventListener
     public void onApplicationEvent(final ApplicationReadyEvent applicationReadyEvent) {
         pollActualizerChain = pollActualizerService.actualizePolls().subscribe();
+        pollStuckedRequestsChain = pollActualizerService.getStuckUpdaterChain().subscribe();
     }
 
     @PreDestroy
     public void onDestroy() {
         if (pollActualizerChain != null) {
             pollActualizerChain.dispose();
+        }
+        if (pollStuckedRequestsChain != null) {
+            pollStuckedRequestsChain.dispose();
         }
     }
 

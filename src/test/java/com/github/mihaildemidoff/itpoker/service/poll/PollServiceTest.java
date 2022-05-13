@@ -39,9 +39,9 @@ class PollServiceTest {
                         .processingStatus(ProcessingStatus.READY_TO_PROCESS)
                         .needRefresh(true)
                         .build()));
-        Mockito.when(pollRepository.save(ArgumentMatchers.argThat(arg -> arg.getProcessingStatus() == ProcessingStatus.PROCESSING && !arg.getNeedRefresh()))).thenAnswer((Answer<Mono<PollEntity>>) invocationOnMock -> Mono.just(invocationOnMock.getArgument(0)));
+        Mockito.when(pollRepository.save(ArgumentMatchers.argThat(arg -> arg.getProcessingStatus() == ProcessingStatus.PROCESSING && !arg.getNeedRefresh() && arg.getLastProcessingDate() != null))).thenAnswer((Answer<Mono<PollEntity>>) invocationOnMock -> Mono.just(invocationOnMock.getArgument(0)));
         final PollBO expected = PollBO.builder().build();
-        Mockito.when(pollMapper.toBO(ArgumentMatchers.argThat(arg -> arg.getProcessingStatus() == ProcessingStatus.PROCESSING && !arg.getNeedRefresh()))).thenReturn(expected);
+        Mockito.when(pollMapper.toBO(ArgumentMatchers.argThat(arg -> arg.getProcessingStatus() == ProcessingStatus.PROCESSING && !arg.getNeedRefresh() && arg.getLastProcessingDate() != null))).thenReturn(expected);
         StepVerifier.create(pollService.findNextPollForProcessing())
                 .expectSubscription()
                 .expectNext(expected)

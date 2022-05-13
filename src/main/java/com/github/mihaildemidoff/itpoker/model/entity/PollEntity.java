@@ -45,6 +45,8 @@ public class PollEntity implements AuditableEntity {
     @NotNull
     @Column("processing_status")
     private final ProcessingStatus processingStatus;
+    @Column("last_processing_date")
+    private final LocalDateTime lastProcessingDate;
     @Column("created_date")
     @CreatedDate
     private final LocalDateTime createdDate;

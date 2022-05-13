@@ -7,7 +7,18 @@ import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+
 public interface PollRepository extends ReactiveCrudRepository<PollEntity, Long> {
+
+    @Modifying
+    @Query("""
+            UPDATE poll
+            SET processing_status = 'READY_TO_PROCESS'
+            WHERE processing_status = 'PROCESSING'
+              AND last_processing_date < :fromDate"""
+    )
+    Mono<Long> updateStuckRequests(LocalDateTime fromDate);
 
     Mono<PollEntity> findByMessageId(String messageId);
 

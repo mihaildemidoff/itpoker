@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class PollService {
@@ -25,6 +28,7 @@ public class PollService {
                 .findNextPollForProcessing()
                 .map(poll -> poll.toBuilder()
                         .processingStatus(ProcessingStatus.PROCESSING)
+                        .lastProcessingDate(LocalDateTime.now())
                         .needRefresh(false)
                         .build()
                 )
@@ -43,6 +47,10 @@ public class PollService {
                 )
                 .flatMap(pollRepository::save)
                 .map(pollMapper::toBO);
+    }
+
+    public Mono<Long> switchStuckRequestsToReadyToProcess(final Duration delta) {
+        return pollRepository.updateStuckRequests(LocalDateTime.now().minus(delta));
     }
 
     public Mono<PollBO> findPollByMessageId(final String messageId) {

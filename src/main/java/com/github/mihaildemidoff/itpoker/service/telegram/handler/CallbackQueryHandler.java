@@ -34,19 +34,26 @@ public class CallbackQueryHandler implements UpdateHandler {
                 .flatMap(callback -> keyboardMarkupService.getButtonType(callback.getData())
                         .flatMap(buttonType -> switch (buttonType) {
                             case VOTE -> vote(callback, absSender);
-                            case FINISH -> finishPoll(callback);
-                            case RESTART -> restartPoll(callback);
+                            case FINISH -> finishPoll(callback, absSender);
+                            case RESTART -> restartPoll(callback, absSender);
                         }))
+                .onErrorResume(PollAlreadyFinishedException.class, e -> senderHelper.executeAsync(absSender, buildAnswer(update.getCallbackQuery(), "Error: poll already finished")).thenReturn(false))
+                .onErrorResume(PollNotFoundException.class, e -> senderHelper.executeAsync(absSender, buildAnswer(update.getCallbackQuery(), "Error: poll not found")).thenReturn(false))
+                .onErrorResume(Exception.class, e -> senderHelper.executeAsync(absSender, buildAnswer(update.getCallbackQuery(), "Error during processing request")).thenReturn(false));
+    }
+
+    private Mono<Boolean> restartPoll(final CallbackQuery callbackQuery,
+                                      final AbsSender absSender) {
+        return pollLifecycleService
+                .restartPoll(callbackQuery.getInlineMessageId(), callbackQuery.getFrom().getId())
+                .then(senderHelper.executeAsync(absSender, buildAnswer(callbackQuery, "Poll restarted")))
                 .thenReturn(true);
     }
 
-    private Mono<Boolean> restartPoll(final CallbackQuery callbackQuery) {
-        return pollLifecycleService.restartPoll(callbackQuery.getInlineMessageId(), callbackQuery.getFrom().getId())
-                .thenReturn(true);
-    }
-
-    private Mono<Boolean> finishPoll(final CallbackQuery callbackQuery) {
+    private Mono<Boolean> finishPoll(final CallbackQuery callbackQuery,
+                                     final AbsSender absSender) {
         return pollLifecycleService.finishPoll(callbackQuery.getInlineMessageId(), callbackQuery.getFrom().getId())
+                .then(senderHelper.executeAsync(absSender, buildAnswer(callbackQuery, "Poll finished")))
                 .thenReturn(true);
     }
 
@@ -60,24 +67,18 @@ public class CallbackQueryHandler implements UpdateHandler {
         return voteService
                 .createOrUpdateVote(callbackQuery.getInlineMessageId(), Long.valueOf(callbackQuery.getData()), callbackQuery.getFrom().getId(), callbackQuery.getFrom().getUserName(), callbackQuery.getFrom().getFirstName(), callbackQuery.getFrom().getLastName())
                 .flatMap(vote -> deckOptionService.findById(vote.deckOptionId())
-                        .map(deckOption -> AnswerCallbackQuery.builder()
-                                .callbackQueryId(callbackQuery.getId())
-                                .text("Your vote: " + deckOption.text())
-                                .showAlert(false)
-                                .build()))
-                .onErrorResume(PollAlreadyFinishedException.class, e -> Mono.just(AnswerCallbackQuery.builder()
-                        .callbackQueryId(callbackQuery.getId())
-                        .text("Error: poll already finished")
-                        .showAlert(false)
-                        .build())
-                )
-                .onErrorResume(PollNotFoundException.class, e -> Mono.just(AnswerCallbackQuery.builder()
-                        .callbackQueryId(callbackQuery.getId())
-                        .text("Error: poll not found")
-                        .showAlert(false)
-                        .build())
-                )
-                .flatMap(answerCallbackQuery -> senderHelper.executeAsync(absSender, answerCallbackQuery));
+                        .map(deckOption -> buildAnswer(callbackQuery, "Your vote: " + deckOption.text())))
+                .flatMap(answerCallbackQuery -> senderHelper.executeAsync(absSender, answerCallbackQuery))
+                .thenReturn(true);
+    }
+
+    private AnswerCallbackQuery buildAnswer(final CallbackQuery callbackQuery,
+                                            final String text) {
+        return AnswerCallbackQuery.builder()
+                .callbackQueryId(callbackQuery.getId())
+                .text(text)
+                .showAlert(false)
+                .build();
     }
 
 }

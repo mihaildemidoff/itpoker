@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  postgres:
+    image: "postgres"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: itpoker
+      PGDATA: /var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - "/Users/mihaildemidoff/temp/pgdata:/var/lib/postgresql/data"
+  itpoker:
+    image: "mihaildemidoff/itpoker:0.0.1-SNAPSHOT"
+    environment:
+      JAVA_TOOL_OPTIONS: -Dspring.profiles.active=docker
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: itpoker
+      TELEGRAM_BOT_TOKEN:
+      TELEGRAM_BOT_NAME:
+    depends_on:
+      postgres:
+        condition: service_healthy
+    links:
+      - postgres

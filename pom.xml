@@ -19,6 +19,7 @@
         <mapstruct.version>1.4.2.Final</mapstruct.version>
         <telegrambots.version>6.0.1</telegrambots.version>
         <guava.version>31.1-jre</guava.version>
+        <jib-maven-plugin.version>3.2.1</jib-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -121,11 +122,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <image>
-                        <builder>paketobuildpacks/builder:tiny</builder>
-                    </image>
-                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -149,5 +145,57 @@
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.google.cloud.tools</groupId>
+                            <artifactId>jib-maven-plugin</artifactId>
+                            <version>${jib-maven-plugin.version}</version>
+                            <configuration>
+                                <container>
+                                    <jvmFlags>-XX:+UseZGC</jvmFlags>
+                                </container>
+                                <from>
+                                    <platforms>
+                                        <platform>
+                                            <architecture>arm64</architecture>
+                                            <os>linux</os>
+                                        </platform>
+                                        <platform>
+                                            <architecture>amd64</architecture>
+                                            <os>linux</os>
+                                        </platform>
+                                    </platforms>
+                                </from>
+                                <to>
+                                    <image>docker.io/mihaildemidoff/itpoker:${project.version}</image>
+                                </to>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <id>push</id>
+                                    <phase>package</phase>
+                                    <goals>
+                                        <goal>build</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+                <plugins>
+                    <plugin>
+                        <groupId>com.google.cloud.tools</groupId>
+                        <artifactId>jib-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

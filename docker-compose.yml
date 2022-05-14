@@ -15,7 +15,7 @@ services:
     volumes:
       - "/Users/mihaildemidoff/temp/pgdata:/var/lib/postgresql/data"
   itpoker:
-    image: "mihaildemidoff/itpoker:0.0.1-SNAPSHOT"
+    image: "mihaildemidoff/itpoker:1.0.0"
     environment:
       JAVA_TOOL_OPTIONS: -Dspring.profiles.active=docker
       DB_USERNAME: postgres

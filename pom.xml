@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.github.mihaildemidoff</groupId>
     <artifactId>itpoker</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <name>itpoker</name>
     <description>ITPoker application</description>
 

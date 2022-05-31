@@ -108,7 +108,7 @@ class CallbackQueryHandlerTest {
         Mockito.when(pollLifecycleService.finishPoll(ArgumentMatchers.eq(inlineMessageId), ArgumentMatchers.eq(userId)))
                 .thenReturn(Mono.empty());
         Mockito.when(senderHelper.executeAsync(ArgumentMatchers.eq(absSender), ArgumentMatchers.any(AnswerCallbackQuery.class)))
-                .thenReturn(Mono.empty());
+                .thenReturn(Mono.just(true));
         StepVerifier.create(handler.handle(update, absSender))
                 .expectSubscription()
                 .expectNext(true)
@@ -146,7 +146,7 @@ class CallbackQueryHandlerTest {
         Mockito.when(pollLifecycleService.restartPoll(ArgumentMatchers.eq(inlineMessageId), ArgumentMatchers.eq(userId)))
                 .thenReturn(Mono.empty());
         Mockito.when(senderHelper.executeAsync(ArgumentMatchers.eq(absSender), ArgumentMatchers.any(AnswerCallbackQuery.class)))
-                .thenReturn(Mono.empty());
+                .thenReturn(Mono.just(true));
         StepVerifier.create(handler.handle(update, absSender))
                 .expectSubscription()
                 .expectNext(true)

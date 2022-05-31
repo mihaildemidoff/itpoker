@@ -2,6 +2,7 @@ package com.github.mihaildemidoff.itpoker.service.telegram.handler;
 
 import com.github.mihaildemidoff.itpoker.model.exception.PollAlreadyFinishedException;
 import com.github.mihaildemidoff.itpoker.model.exception.PollNotFoundException;
+import com.github.mihaildemidoff.itpoker.model.exception.UserNotAllowedException;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckOptionService;
 import com.github.mihaildemidoff.itpoker.service.poll.PollLifecycleService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
@@ -37,24 +38,28 @@ public class CallbackQueryHandler implements UpdateHandler {
                             case FINISH -> finishPoll(callback, absSender);
                             case RESTART -> restartPoll(callback, absSender);
                         }))
-                .onErrorResume(PollAlreadyFinishedException.class, e -> senderHelper.executeAsync(absSender, buildAnswer(update.getCallbackQuery(), "Error: poll already finished")).thenReturn(false))
-                .onErrorResume(PollNotFoundException.class, e -> senderHelper.executeAsync(absSender, buildAnswer(update.getCallbackQuery(), "Error: poll not found")).thenReturn(false))
-                .onErrorResume(Exception.class, e -> senderHelper.executeAsync(absSender, buildAnswer(update.getCallbackQuery(), "Error during processing request")).thenReturn(false));
+                .onErrorResume(PollAlreadyFinishedException.class, e -> senderHelper.executeAsync(absSender, buildAnswer(update.getCallbackQuery(), "\uD83D\uDD34 Error: poll already finished")).thenReturn(false))
+                .onErrorResume(PollNotFoundException.class, e -> senderHelper.executeAsync(absSender, buildAnswer(update.getCallbackQuery(), "\uD83D\uDD34 Error: poll not found")).thenReturn(false))
+                .onErrorResume(UserNotAllowedException.class, e -> senderHelper.executeAsync(absSender, buildAnswer(update.getCallbackQuery(), "\uD83D\uDD34 Error: action not allowed for the user")).thenReturn(false))
+                .onErrorResume(Exception.class, e -> senderHelper.executeAsync(absSender, buildAnswer(update.getCallbackQuery(), "\uD83D\uDD34 Error during processing request")).thenReturn(false));
     }
 
     private Mono<Boolean> restartPoll(final CallbackQuery callbackQuery,
                                       final AbsSender absSender) {
         return pollLifecycleService
                 .restartPoll(callbackQuery.getInlineMessageId(), callbackQuery.getFrom().getId())
-                .then(senderHelper.executeAsync(absSender, buildAnswer(callbackQuery, "Poll restarted")))
-                .thenReturn(true);
+                .hasElement()
+                .flatMap(unused -> senderHelper.executeAsync(absSender, buildAnswer(callbackQuery, "\uD83D\uDFE2 Poll restarted")))
+                .map(unused -> true);
     }
 
     private Mono<Boolean> finishPoll(final CallbackQuery callbackQuery,
                                      final AbsSender absSender) {
-        return pollLifecycleService.finishPoll(callbackQuery.getInlineMessageId(), callbackQuery.getFrom().getId())
-                .then(senderHelper.executeAsync(absSender, buildAnswer(callbackQuery, "Poll finished")))
-                .thenReturn(true);
+        return pollLifecycleService
+                .finishPoll(callbackQuery.getInlineMessageId(), callbackQuery.getFrom().getId())
+                .hasElement()
+                .flatMap(unused -> senderHelper.executeAsync(absSender, buildAnswer(callbackQuery, "\uD83D\uDFE2 Poll finished")))
+                .map(unused -> true);
     }
 
     @Override
@@ -67,7 +72,7 @@ public class CallbackQueryHandler implements UpdateHandler {
         return voteService
                 .createOrUpdateVote(callbackQuery.getInlineMessageId(), Long.valueOf(callbackQuery.getData()), callbackQuery.getFrom().getId(), callbackQuery.getFrom().getUserName(), callbackQuery.getFrom().getFirstName(), callbackQuery.getFrom().getLastName())
                 .flatMap(vote -> deckOptionService.findById(vote.deckOptionId())
-                        .map(deckOption -> buildAnswer(callbackQuery, "Your vote: " + deckOption.text())))
+                        .map(deckOption -> buildAnswer(callbackQuery, "\uD83D\uDFE2 Your vote: " + deckOption.text())))
                 .flatMap(answerCallbackQuery -> senderHelper.executeAsync(absSender, answerCallbackQuery))
                 .thenReturn(true);
     }

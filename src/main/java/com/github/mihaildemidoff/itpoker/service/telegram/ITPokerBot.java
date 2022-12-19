@@ -3,6 +3,7 @@ package com.github.mihaildemidoff.itpoker.service.telegram;
 import com.github.mihaildemidoff.itpoker.properties.TelegramProperties;
 import com.github.mihaildemidoff.itpoker.service.telegram.handler.UpdateHandler;
 import com.google.common.collect.MoreCollectors;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -14,7 +15,6 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
-import javax.annotation.PreDestroy;
 import java.util.List;
 
 @Service

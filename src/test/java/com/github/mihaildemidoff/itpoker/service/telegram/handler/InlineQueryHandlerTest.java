@@ -5,8 +5,15 @@ import com.github.mihaildemidoff.itpoker.model.bo.DeckBO;
 import com.github.mihaildemidoff.itpoker.model.bo.template.PollTemplateBO;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
-import com.github.mihaildemidoff.itpoker.service.telegram.SenderHelper;
 import com.github.mihaildemidoff.itpoker.service.telegram.TemplateService;
+import io.github.mihaildemidoff.reactive.tg.bots.core.TelegramClient;
+import io.github.mihaildemidoff.reactive.tg.bots.model.enums.ParseMode;
+import io.github.mihaildemidoff.reactive.tg.bots.model.inline.InlineQuery;
+import io.github.mihaildemidoff.reactive.tg.bots.model.inline.content.InputTextMessageContent;
+import io.github.mihaildemidoff.reactive.tg.bots.model.inline.result.InlineQueryResultArticle;
+import io.github.mihaildemidoff.reactive.tg.bots.model.methods.inline.AnswerInlineQueryMethod;
+import io.github.mihaildemidoff.reactive.tg.bots.model.reply.InlineKeyboardMarkup;
+import io.github.mihaildemidoff.reactive.tg.bots.model.update.Update;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.CoreMatchers;
@@ -17,13 +24,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.InlineQuery;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResultArticle;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.bots.AbsSender;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -38,19 +38,17 @@ class InlineQueryHandlerTest {
     @InjectMocks
     private InlineQueryHandler handler;
     @Mock
-    private AbsSender absSender;
-    @Mock
     private Update update;
     @Mock
     private InlineQuery inlineQuery;
-    @Mock
-    private SenderHelper senderHelper;
     @Mock
     private DeckService deckService;
     @Mock
     private KeyboardMarkupService keyboardMarkupService;
     @Mock
     private TemplateService templateService;
+    @Mock
+    private TelegramClient telegramClient;
 
     @Test
     void testSuccessHandle() {
@@ -82,15 +80,29 @@ class InlineQueryHandlerTest {
                         .votes(List.of())
                         .build())))
                 .thenReturn(Mono.just(template));
-        final InputTextMessageContent inputMessageContent = new InputTextMessageContent(template, "HTML", true, List.of());
-        final InlineQueryResultArticle article = new InlineQueryResultArticle(deck.id().toString(), deck.title(), inputMessageContent, inlineKeyboardMarkup, null, true, deck.description(), null, null, null);
-        final AnswerInlineQuery expectedAnswer = new AnswerInlineQuery(queryId, List.of(article));
-        expectedAnswer.setIsPersonal(false);
-        expectedAnswer.setCacheTime(0);
+        final InputTextMessageContent inputMessageContent = InputTextMessageContent.builder()
+                .messageText(template)
+                .parseMode(ParseMode.HTML)
+                .disableWebPagePreview(true)
+                .build();
+        final InlineQueryResultArticle article = InlineQueryResultArticle.builder()
+                .id(deck.id().toString())
+                .title(deck.title())
+                .inputMessageContent(inputMessageContent)
+                .replyMarkup(inlineKeyboardMarkup)
+                .hideUrl(true)
+                .description(deck.description())
+                .build();
+        final AnswerInlineQueryMethod expectedAnswer = AnswerInlineQueryMethod.builder()
+                .inlineQueryId(queryId)
+                .results(List.of(article))
+                .isPersonal(false)
+                .cacheTime(0L)
+                .build();
         final boolean expectedResult = RandomUtils.nextBoolean();
-        Mockito.when(senderHelper.executeAsync(ArgumentMatchers.eq(absSender), ArgumentMatchers.eq(expectedAnswer)))
+        Mockito.when(telegramClient.executeMethod(ArgumentMatchers.eq(expectedAnswer)))
                 .thenReturn(Mono.just(expectedResult));
-        StepVerifier.create(handler.handle(update, absSender))
+        StepVerifier.create(handler.handle(update))
                 .expectSubscription()
                 .expectNext(expectedResult)
                 .verifyComplete();
@@ -102,7 +114,7 @@ class InlineQueryHandlerTest {
                 .thenReturn(inlineQuery);
         Mockito.when(inlineQuery.getQuery())
                 .thenReturn("       ");
-        StepVerifier.create(handler.handle(update, absSender))
+        StepVerifier.create(handler.handle(update))
                 .expectSubscription()
                 .expectNextCount(0L)
                 .verifyComplete();
@@ -110,8 +122,9 @@ class InlineQueryHandlerTest {
 
     @Test
     void testShouldHandle() {
-        Mockito.when(update.hasInlineQuery())
-                .thenReturn(true);
+        Mockito.when(update.getInlineQuery())
+                .thenReturn(InlineQuery.builder()
+                        .build());
         assertThat(handler.shouldHandle(update), CoreMatchers.is(true));
     }
 }

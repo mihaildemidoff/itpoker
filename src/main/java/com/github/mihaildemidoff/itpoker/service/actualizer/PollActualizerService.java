@@ -5,14 +5,14 @@ import com.github.mihaildemidoff.itpoker.model.bo.PollBO;
 import com.github.mihaildemidoff.itpoker.model.common.PollStatus;
 import com.github.mihaildemidoff.itpoker.service.poll.PollService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
-import com.github.mihaildemidoff.itpoker.service.telegram.SenderHelper;
 import com.github.mihaildemidoff.itpoker.service.telegram.TemplateService;
+import io.github.mihaildemidoff.reactive.tg.bots.core.TelegramClient;
+import io.github.mihaildemidoff.reactive.tg.bots.model.enums.ParseMode;
+import io.github.mihaildemidoff.reactive.tg.bots.model.methods.message.text.EditInlineMessageTextMethod;
+import io.github.mihaildemidoff.reactive.tg.bots.model.reply.InlineKeyboardMarkup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.bots.AbsSender;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -24,10 +24,9 @@ import java.util.List;
 @Slf4j
 public class PollActualizerService {
     private final PollService pollService;
-    private final AbsSender absSender;
     private final TemplateService templateService;
     private final KeyboardMarkupService keyboardMarkupService;
-    private final SenderHelper senderHelper;
+    private final TelegramClient telegramClient;
 
     public Flux<Long> getStuckUpdaterChain() {
         return Flux.interval(Duration.ofSeconds(3))
@@ -41,7 +40,7 @@ public class PollActualizerService {
                 .flatMap(poll -> Mono.zip(templateService.generateTemplateForPoll(poll.messageId()),
                                 keyboardMarkupService.buildMarkup(poll.deckId(), poll.status() == PollStatus.FINISHED ? List.of(ButtonType.RESTART) : List.of(ButtonType.VOTE, ButtonType.RESTART, ButtonType.FINISH)))
                         .map(t -> buildMessage(poll, t.getT1(), t.getT2()))
-                        .flatMap(message -> senderHelper.executeAsync(absSender, message))
+                        .flatMap(message -> telegramClient.executeMethod(message))
                         .flatMap(serializable -> pollService.moveToReadyToProcess(poll.id()))
                         .onErrorResume(e -> pollService.moveToReadyToProcess(poll.id()))
                         .thenReturn(true))
@@ -50,16 +49,16 @@ public class PollActualizerService {
                 });
     }
 
-    private EditMessageText buildMessage(final PollBO poll,
-                                         final String template,
-                                         final InlineKeyboardMarkup markup) {
-        final EditMessageText editMessageText = new EditMessageText();
-        editMessageText.setInlineMessageId(poll.messageId());
-        editMessageText.setReplyMarkup(markup);
-        editMessageText.setParseMode("HTML");
-        editMessageText.setDisableWebPagePreview(true);
-        editMessageText.setText(template);
-        return editMessageText;
+    private EditInlineMessageTextMethod buildMessage(final PollBO poll,
+                                                     final String template,
+                                                     final InlineKeyboardMarkup markup) {
+        return EditInlineMessageTextMethod.builder()
+                .inlineMessageId(poll.messageId())
+                .replyMarkup(markup)
+                .parseMode(ParseMode.HTML)
+                .disableWebPagePreview(true)
+                .text(template)
+                .build();
     }
 }
 

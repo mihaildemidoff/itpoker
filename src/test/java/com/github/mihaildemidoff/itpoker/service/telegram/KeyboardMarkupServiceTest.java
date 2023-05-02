@@ -3,6 +3,8 @@ package com.github.mihaildemidoff.itpoker.service.telegram;
 import com.github.mihaildemidoff.itpoker.model.bo.ButtonType;
 import com.github.mihaildemidoff.itpoker.model.bo.DeckOptionBO;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckOptionService;
+import io.github.mihaildemidoff.reactive.tg.bots.model.inline.InlineKeyboardButton;
+import io.github.mihaildemidoff.reactive.tg.bots.model.reply.InlineKeyboardMarkup;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,8 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -80,14 +80,14 @@ class KeyboardMarkupServiceTest {
                         List.of(option(1L, "1", 0, 0), option(2L, "2", 0, 1), option(3L, "3", 1, 0)),
                         List.of(ButtonType.VOTE, ButtonType.RESTART, ButtonType.FINISH),
                         InlineKeyboardMarkup.builder()
-                                .keyboard(List.of(List.of(button("1", "1"), button("2", "2")), List.of(button("3", "3")), List.of(button("Finish", "Finish"), button("Restart", "Restart"))))
+                                .inlineKeyboard(List.of(List.of(button("1", "1"), button("2", "2")), List.of(button("3", "3")), List.of(button("Finish", "Finish"), button("Restart", "Restart"))))
                                 .build()
                 ),
                 Arguments.of(
                         List.of(option(1L, "1", 0, 0), option(2L, "2", 0, 1), option(3L, "3", 1, 0)),
                         List.of(ButtonType.RESTART),
                         InlineKeyboardMarkup.builder()
-                                .keyboard(List.of(List.of(button("Restart", "Restart"))))
+                                .inlineKeyboard(List.of(List.of(button("Restart", "Restart"))))
                                 .build()
                 )
         );

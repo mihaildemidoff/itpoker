@@ -6,8 +6,12 @@ import com.github.mihaildemidoff.itpoker.model.bo.VoteBO;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckOptionService;
 import com.github.mihaildemidoff.itpoker.service.poll.PollLifecycleService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
-import com.github.mihaildemidoff.itpoker.service.telegram.SenderHelper;
 import com.github.mihaildemidoff.itpoker.service.vote.VoteService;
+import io.github.mihaildemidoff.reactive.tg.bots.core.TelegramClient;
+import io.github.mihaildemidoff.reactive.tg.bots.model.inline.CallbackQuery;
+import io.github.mihaildemidoff.reactive.tg.bots.model.methods.AnswerCallbackQueryMethod;
+import io.github.mihaildemidoff.reactive.tg.bots.model.update.Update;
+import io.github.mihaildemidoff.reactive.tg.bots.model.user.User;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.CoreMatchers;
@@ -18,11 +22,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.bots.AbsSender;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -42,13 +41,11 @@ class CallbackQueryHandlerTest {
     @Mock
     private PollLifecycleService pollLifecycleService;
     @Mock
-    private SenderHelper senderHelper;
-    @Mock
     private Update update;
     @Mock
     private CallbackQuery callbackQuery;
     @Mock
-    private AbsSender absSender;
+    private TelegramClient telegramClient;
 
     @Test
     void testVoteSuccess() {
@@ -68,10 +65,10 @@ class CallbackQueryHandlerTest {
                         .deckOptionId(deckOptionId)
                         .build()));
         Mockito.when(deckOptionService.findById(ArgumentMatchers.eq(deckOptionId)))
-                        .thenReturn(Mono.just(DeckOptionBO.builder().build()));
-        Mockito.when(senderHelper.executeAsync(ArgumentMatchers.eq(absSender), ArgumentMatchers.any(AnswerCallbackQuery.class)))
+                .thenReturn(Mono.just(DeckOptionBO.builder().build()));
+        Mockito.when(telegramClient.executeMethod(ArgumentMatchers.any(AnswerCallbackQueryMethod.class)))
                 .thenReturn(Mono.empty());
-        StepVerifier.create(handler.handle(update, absSender))
+        StepVerifier.create(handler.handle(update))
                 .expectSubscription()
                 .expectNext(true)
                 .verifyComplete();
@@ -88,9 +85,9 @@ class CallbackQueryHandlerTest {
                 .thenReturn(Mono.just(ButtonType.FINISH));
         Mockito.when(pollLifecycleService.finishPoll(ArgumentMatchers.eq(inlineMessageId), ArgumentMatchers.eq(userId)))
                 .thenReturn(Mono.error(IllegalAccessException::new));
-        Mockito.when(senderHelper.executeAsync(ArgumentMatchers.eq(absSender), ArgumentMatchers.any(AnswerCallbackQuery.class)))
+        Mockito.when(telegramClient.executeMethod(ArgumentMatchers.any(AnswerCallbackQueryMethod.class)))
                 .thenReturn(Mono.empty());
-        StepVerifier.create(handler.handle(update, absSender))
+        StepVerifier.create(handler.handle(update))
                 .expectSubscription()
                 .expectNext(false)
                 .verifyComplete();
@@ -107,9 +104,9 @@ class CallbackQueryHandlerTest {
                 .thenReturn(Mono.just(ButtonType.FINISH));
         Mockito.when(pollLifecycleService.finishPoll(ArgumentMatchers.eq(inlineMessageId), ArgumentMatchers.eq(userId)))
                 .thenReturn(Mono.empty());
-        Mockito.when(senderHelper.executeAsync(ArgumentMatchers.eq(absSender), ArgumentMatchers.any(AnswerCallbackQuery.class)))
+        Mockito.when(telegramClient.executeMethod(ArgumentMatchers.any(AnswerCallbackQueryMethod.class)))
                 .thenReturn(Mono.just(true));
-        StepVerifier.create(handler.handle(update, absSender))
+        StepVerifier.create(handler.handle(update))
                 .expectSubscription()
                 .expectNext(true)
                 .verifyComplete();
@@ -126,9 +123,9 @@ class CallbackQueryHandlerTest {
                 .thenReturn(Mono.just(ButtonType.RESTART));
         Mockito.when(pollLifecycleService.restartPoll(ArgumentMatchers.eq(inlineMessageId), ArgumentMatchers.eq(userId)))
                 .thenReturn(Mono.error(IllegalAccessException::new));
-        Mockito.when(senderHelper.executeAsync(ArgumentMatchers.eq(absSender), ArgumentMatchers.any(AnswerCallbackQuery.class)))
+        Mockito.when(telegramClient.executeMethod(ArgumentMatchers.any(AnswerCallbackQueryMethod.class)))
                 .thenReturn(Mono.empty());
-        StepVerifier.create(handler.handle(update, absSender))
+        StepVerifier.create(handler.handle(update))
                 .expectSubscription()
                 .expectNext(false)
                 .verifyComplete();
@@ -145,9 +142,9 @@ class CallbackQueryHandlerTest {
                 .thenReturn(Mono.just(ButtonType.RESTART));
         Mockito.when(pollLifecycleService.restartPoll(ArgumentMatchers.eq(inlineMessageId), ArgumentMatchers.eq(userId)))
                 .thenReturn(Mono.empty());
-        Mockito.when(senderHelper.executeAsync(ArgumentMatchers.eq(absSender), ArgumentMatchers.any(AnswerCallbackQuery.class)))
+        Mockito.when(telegramClient.executeMethod(ArgumentMatchers.any(AnswerCallbackQueryMethod.class)))
                 .thenReturn(Mono.just(true));
-        StepVerifier.create(handler.handle(update, absSender))
+        StepVerifier.create(handler.handle(update))
                 .expectSubscription()
                 .expectNext(true)
                 .verifyComplete();
@@ -173,7 +170,7 @@ class CallbackQueryHandlerTest {
                 .thenReturn(user);
         Mockito.when(user.getId())
                 .thenReturn(userId);
-        Mockito.lenient().when(user.getUserName())
+        Mockito.lenient().when(user.getUsername())
                 .thenReturn(username);
         Mockito.lenient().when(user.getFirstName())
                 .thenReturn(firstName);
@@ -183,8 +180,9 @@ class CallbackQueryHandlerTest {
 
     @Test
     void testShouldHandle() {
-        Mockito.when(update.hasCallbackQuery())
-                .thenReturn(true);
+        Mockito.when(update.getCallbackQuery())
+                .thenReturn(CallbackQuery.builder()
+                        .build());
         assertThat(handler.shouldHandle(update), CoreMatchers.is(true));
     }
 

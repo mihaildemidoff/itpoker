@@ -4,11 +4,11 @@ import com.github.mihaildemidoff.itpoker.model.bo.ButtonType;
 import com.github.mihaildemidoff.itpoker.model.bo.DeckOptionBO;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckOptionService;
 import com.google.common.collect.Lists;
+import io.github.mihaildemidoff.reactive.tg.bots.model.inline.InlineKeyboardButton;
+import io.github.mihaildemidoff.reactive.tg.bots.model.reply.InlineKeyboardMarkup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -43,19 +43,24 @@ public class KeyboardMarkupService {
                                                 .sorted()
                                                 .map(row -> grouped.get(row)
                                                         .stream()
-                                                        .map(option -> InlineKeyboardButton.builder()
-                                                                .text(option.text())
-                                                                .callbackData(option.id().toString())
-                                                                .build())
+                                                        .map(option -> {
+                                                            final InlineKeyboardButton button = InlineKeyboardButton.builder()
+                                                                    .text(option.text())
+                                                                    .callbackData(option.id().toString())
+                                                                    .build();
+                                                            return button;
+                                                        })
                                                         .toList()),
                                         Stream.of(additionalButtons)
                                 )
                                 .toList();
-                        return InlineKeyboardMarkup.builder().keyboard(buttons).build();
+                        return InlineKeyboardMarkup.builder().
+                                inlineKeyboard(buttons)
+                                .build();
                     });
         } else {
             return Mono.just(InlineKeyboardMarkup.builder()
-                    .keyboard(List.of(buildAdditionalButtons(includedButtonTypes)))
+                    .inlineKeyboard(List.of(buildAdditionalButtons(includedButtonTypes)))
                     .build());
         }
     }

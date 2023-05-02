@@ -2,6 +2,9 @@ package com.github.mihaildemidoff.itpoker.service.telegram.handler;
 
 import com.github.mihaildemidoff.itpoker.model.bo.PollBO;
 import com.github.mihaildemidoff.itpoker.service.poll.PollService;
+import io.github.mihaildemidoff.reactive.tg.bots.model.inline.ChosenInlineResult;
+import io.github.mihaildemidoff.reactive.tg.bots.model.update.Update;
+import io.github.mihaildemidoff.reactive.tg.bots.model.user.User;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.CoreMatchers;
@@ -12,10 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.ChosenInlineQuery;
-import org.telegram.telegrambots.meta.bots.AbsSender;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -30,13 +29,12 @@ class ChosenInlineQueryHandlerTest {
     private PollService pollService;
     @Mock
     private Update update;
-    @Mock
-    private AbsSender absSender;
+
 
     @Test
     void testHandleError() {
-        final ChosenInlineQuery chosenInlineQuery = Mockito.mock(ChosenInlineQuery.class);
-        Mockito.when(update.getChosenInlineQuery())
+        final ChosenInlineResult chosenInlineQuery = Mockito.mock(ChosenInlineResult.class);
+        Mockito.when(update.getChosenInlineResult())
                 .thenReturn(chosenInlineQuery);
         final Long deckId = RandomUtils.nextLong();
         final Long userId = RandomUtils.nextLong();
@@ -56,7 +54,7 @@ class ChosenInlineQueryHandlerTest {
         Mockito.when(pollService.createPoll(ArgumentMatchers.eq(deckId),
                         ArgumentMatchers.eq(messageId), ArgumentMatchers.eq(userId), ArgumentMatchers.eq(query)))
                 .thenReturn(Mono.error(IllegalArgumentException::new));
-        StepVerifier.create(handler.handle(update, absSender))
+        StepVerifier.create(handler.handle(update))
                 .expectSubscription()
                 .expectNext(false)
                 .verifyComplete();
@@ -64,8 +62,8 @@ class ChosenInlineQueryHandlerTest {
 
     @Test
     void testHandleSuccess() {
-        final ChosenInlineQuery chosenInlineQuery = Mockito.mock(ChosenInlineQuery.class);
-        Mockito.when(update.getChosenInlineQuery())
+        final ChosenInlineResult chosenInlineQuery = Mockito.mock(ChosenInlineResult.class);
+        Mockito.when(update.getChosenInlineResult())
                 .thenReturn(chosenInlineQuery);
         final Long deckId = RandomUtils.nextLong();
         final Long userId = RandomUtils.nextLong();
@@ -85,7 +83,7 @@ class ChosenInlineQueryHandlerTest {
         Mockito.when(pollService.createPoll(ArgumentMatchers.eq(deckId),
                         ArgumentMatchers.eq(messageId), ArgumentMatchers.eq(userId), ArgumentMatchers.eq(query)))
                 .thenReturn(Mono.just(PollBO.builder().build()));
-        StepVerifier.create(handler.handle(update, absSender))
+        StepVerifier.create(handler.handle(update))
                 .expectSubscription()
                 .expectNext(true)
                 .verifyComplete();
@@ -93,8 +91,9 @@ class ChosenInlineQueryHandlerTest {
 
     @Test
     void testShouldHandle() {
-        Mockito.when(update.hasChosenInlineQuery())
-                .thenReturn(true);
+        Mockito.when(update.getChosenInlineResult())
+                .thenReturn(ChosenInlineResult.builder()
+                        .build());
         assertThat(handler.shouldHandle(update), CoreMatchers.is(true));
     }
 

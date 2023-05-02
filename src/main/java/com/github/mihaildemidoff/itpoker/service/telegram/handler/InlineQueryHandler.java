@@ -5,18 +5,18 @@ import com.github.mihaildemidoff.itpoker.model.bo.DeckBO;
 import com.github.mihaildemidoff.itpoker.model.bo.template.PollTemplateBO;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
-import com.github.mihaildemidoff.itpoker.service.telegram.SenderHelper;
 import com.github.mihaildemidoff.itpoker.service.telegram.TemplateService;
+import io.github.mihaildemidoff.reactive.tg.bots.core.TelegramClient;
+import io.github.mihaildemidoff.reactive.tg.bots.model.enums.ParseMode;
+import io.github.mihaildemidoff.reactive.tg.bots.model.inline.content.InputTextMessageContent;
+import io.github.mihaildemidoff.reactive.tg.bots.model.inline.result.InlineQueryResult;
+import io.github.mihaildemidoff.reactive.tg.bots.model.inline.result.InlineQueryResultArticle;
+import io.github.mihaildemidoff.reactive.tg.bots.model.methods.inline.AnswerInlineQueryMethod;
+import io.github.mihaildemidoff.reactive.tg.bots.model.update.Update;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResult;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResultArticle;
-import org.telegram.telegrambots.meta.bots.AbsSender;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -29,24 +29,24 @@ public class InlineQueryHandler implements UpdateHandler {
     private final DeckService deckService;
     private final KeyboardMarkupService keyboardMarkupService;
     private final TemplateService templateService;
-    private final SenderHelper senderHelper;
+    private final TelegramClient client;
 
     @Override
     @Transactional
-    public Mono<Boolean> handle(final Update update, final AbsSender absSender) {
+    public Mono<Boolean> handle(final Update update) {
         if (update.getInlineQuery().getQuery().isBlank()) {
             return Mono.empty();
         }
         return deckService.findAllDecks()
                 .flatMap(deck -> buildQueryResult(update, deck))
                 .collectList()
-                .map(decks -> {
-                    final AnswerInlineQuery answer = new AnswerInlineQuery(update.getInlineQuery().getId(), decks);
-                    answer.setIsPersonal(false);
-                    answer.setCacheTime(0);
-                    return answer;
-                })
-                .flatMap(answer -> senderHelper.executeAsync(absSender, answer))
+                .map(decks -> AnswerInlineQueryMethod.builder()
+                        .inlineQueryId(update.getInlineQuery().getId())
+                        .results(decks)
+                        .isPersonal(false)
+                        .cacheTime(0L)
+                        .build())
+                .flatMap(client::executeMethod)
                 .map(aBoolean -> aBoolean);
     }
 
@@ -62,13 +62,25 @@ public class InlineQueryHandler implements UpdateHandler {
                                 .votes(List.of())
                                 .build()))
                 .map(t -> {
-                    final InputTextMessageContent inputMessageContent = new InputTextMessageContent(t.getT2(), "HTML", true, List.of());
-                    return new InlineQueryResultArticle(deck.id().toString(), deck.title(), inputMessageContent, t.getT1(), null, true, deck.description(), null, null, null);
+                    final InputTextMessageContent inputMessageContent = InputTextMessageContent.builder()
+                            .messageText(t.getT2())
+                            .parseMode(ParseMode.HTML)
+                            .disableWebPagePreview(true)
+                            .build();
+                    return InlineQueryResultArticle.builder()
+                            .id(deck.id().toString())
+                            .title(deck.title())
+                            .inputMessageContent(inputMessageContent)
+                            .replyMarkup(t.getT1())
+                            .hideUrl(true)
+                            .description(deck.description())
+                            .build();
+
                 });
     }
 
     @Override
     public boolean shouldHandle(final Update update) {
-        return update.hasInlineQuery();
+        return update.getInlineQuery() != null;
     }
 }

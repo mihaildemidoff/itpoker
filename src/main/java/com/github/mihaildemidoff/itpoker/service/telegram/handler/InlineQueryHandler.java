@@ -6,7 +6,7 @@ import com.github.mihaildemidoff.itpoker.model.bo.template.PollTemplateBO;
 import com.github.mihaildemidoff.itpoker.service.deck.DeckService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
 import com.github.mihaildemidoff.itpoker.service.telegram.TemplateService;
-import io.github.mihaildemidoff.reactive.tg.bots.core.TelegramClient;
+import io.github.mihaildemidoff.reactive.tg.bots.core.client.api.TelegramClient;
 import io.github.mihaildemidoff.reactive.tg.bots.model.enums.ParseMode;
 import io.github.mihaildemidoff.reactive.tg.bots.model.inline.content.InputTextMessageContent;
 import io.github.mihaildemidoff.reactive.tg.bots.model.inline.result.InlineQueryResult;

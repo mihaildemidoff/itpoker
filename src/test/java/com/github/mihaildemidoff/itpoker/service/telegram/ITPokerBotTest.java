@@ -1,7 +1,7 @@
 package com.github.mihaildemidoff.itpoker.service.telegram;
 
 import com.github.mihaildemidoff.itpoker.service.telegram.handler.UpdateHandler;
-import io.github.mihaildemidoff.reactive.tg.bots.core.TelegramClient;
+import io.github.mihaildemidoff.reactive.tg.bots.core.client.api.TelegramPoller;
 import io.github.mihaildemidoff.reactive.tg.bots.model.update.Update;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +25,7 @@ class ITPokerBotTest {
 
     private ITPokerBot itPokerBot;
     @Mock
-    private TelegramClient telegramClient;
+    private TelegramPoller telegramPoller;
     @Mock
     private UpdateHandler firstHandler;
     @Mock
@@ -33,7 +33,7 @@ class ITPokerBotTest {
 
     @BeforeEach
     void setUp() {
-        itPokerBot = new ITPokerBot(telegramClient, List.of(firstHandler, secondHandler));
+        itPokerBot = new ITPokerBot(telegramPoller, List.of(firstHandler, secondHandler));
     }
 
     @Test
@@ -73,7 +73,7 @@ class ITPokerBotTest {
                         Stream.concat(updatesWithoutHandler.stream(), erroredUpdates.stream()))
                 .collect(Collectors.toList());
         Collections.shuffle(allUpdates);
-        Mockito.when(telegramClient.getUpdatesPublisher(ArgumentMatchers.eq(List.of())))
+        Mockito.when(telegramPoller.getUpdatesPublisher(ArgumentMatchers.eq(List.of())))
                 .thenReturn(Flux.fromIterable(allUpdates));
         itPokerBot.onApplicationEvent(null);
         Mockito.verify(firstHandler, Mockito.times((int) firstHandlerNumberOfUpdates))
@@ -91,7 +91,7 @@ class ITPokerBotTest {
         final List<Update> updates = Stream.generate(() -> Mockito.mock(Update.class))
                 .limit(numberOfUpdates)
                 .toList();
-        Mockito.when(telegramClient.getUpdatesPublisher(ArgumentMatchers.eq(List.of())))
+        Mockito.when(telegramPoller.getUpdatesPublisher(ArgumentMatchers.eq(List.of())))
                 .thenReturn(Flux.fromIterable(updates));
         Mockito.when(firstHandler.handle(ArgumentMatchers.any(Update.class)))
                 .thenReturn(Mono.just(true));

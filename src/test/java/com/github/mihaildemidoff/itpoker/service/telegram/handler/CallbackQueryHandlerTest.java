@@ -7,7 +7,7 @@ import com.github.mihaildemidoff.itpoker.service.deck.DeckOptionService;
 import com.github.mihaildemidoff.itpoker.service.poll.PollLifecycleService;
 import com.github.mihaildemidoff.itpoker.service.telegram.KeyboardMarkupService;
 import com.github.mihaildemidoff.itpoker.service.vote.VoteService;
-import io.github.mihaildemidoff.reactive.tg.bots.core.TelegramClient;
+import io.github.mihaildemidoff.reactive.tg.bots.core.client.api.TelegramClient;
 import io.github.mihaildemidoff.reactive.tg.bots.model.inline.CallbackQuery;
 import io.github.mihaildemidoff.reactive.tg.bots.model.methods.AnswerCallbackQueryMethod;
 import io.github.mihaildemidoff.reactive.tg.bots.model.update.Update;

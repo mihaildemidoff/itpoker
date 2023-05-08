@@ -40,12 +40,12 @@ public class PollActualizerService {
                 .flatMap(poll -> Mono.zip(templateService.generateTemplateForPoll(poll.messageId()),
                                 keyboardMarkupService.buildMarkup(poll.deckId(), poll.status() == PollStatus.FINISHED ? List.of(ButtonType.RESTART) : List.of(ButtonType.VOTE, ButtonType.RESTART, ButtonType.FINISH)))
                         .map(t -> buildMessage(poll, t.getT1(), t.getT2()))
-                        .flatMap(message -> telegramClient.executeMethod(message))
+                        .flatMap(telegramClient::executeMethod)
                         .flatMap(serializable -> pollService.moveToReadyToProcess(poll.id()))
                         .onErrorResume(e -> pollService.moveToReadyToProcess(poll.id()))
                         .thenReturn(true))
                 .onErrorContinue((e, o) -> {
-                    log.error("Error occurred during getting poll from db", e);
+                    log.error("Error occurred during updating inline message", e);
                 });
     }
 
